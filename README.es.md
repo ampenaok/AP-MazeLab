@@ -43,6 +43,11 @@ Permite ajustar fácilmente sus parámetros y exportar puzzles en formatos SVG, 
 
 ## 🚀 Uso local
 
+Descargá el repositorio y abrí:
+
+```bash
+index.html
+
 ---
 
 ## ❤️ Apoyar el proyecto

@@ -47,3 +47,11 @@ Download the repository and open:
 
 ```bash
 index.html
+
+---
+
+## ❤️ Support
+
+If this project helps you, consider supporting future tools and improvements:
+
+☕ https://buymeacoffee.com/ampena
