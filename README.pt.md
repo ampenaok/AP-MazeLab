@@ -47,7 +47,7 @@ Baixe o repositório e abra:
 
 ```bash
 index.html
-
+```md
 ---
 
 ## ❤️ Apoie o projeto
