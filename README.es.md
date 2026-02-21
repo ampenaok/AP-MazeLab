@@ -43,7 +43,10 @@ Permite ajustar fácilmente sus parámetros y exportar puzzles en formatos SVG, 
 
 ## 🚀 Uso local
 
-Descargá el repositorio y abrí:
+---
 
-```bash
-index.html
+## ❤️ Apoyar el proyecto
+
+Si esta herramienta te resulta útil, podés apoyar el desarrollo de futuros proyectos y mejoras:
+
+☕ https://buymeacoffee.com/ampena
