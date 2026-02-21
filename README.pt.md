@@ -43,7 +43,10 @@ Permite ajustar facilmente os parâmetros e exportar puzzles em SVG, PNG e PDF p
 
 ## 🚀 Uso local
 
-Baixe o repositório e abra:
+---
 
-```bash
-index.html
+## ❤️ Apoie o projeto
+
+Se esta ferramenta for útil para você, considere apoiar futuros projetos e melhorias:
+
+☕ https://buymeacoffee.com/ampena
