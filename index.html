@@ -7,7 +7,8 @@
 <title>AP MazeLab — Free • Unlimited • Customizable</title>
 <meta content="AP MazeLab es una herramienta online, totalmente gratuita, para crear laberintos personalizables de forma ilimitada. Ajustá parámetros y exportá puzzles en SVG/PNG para libros, educación y proyectos creativos." name="description"/>
 <meta content="#111827" name="theme-color"/>
-<script async="" data-goatcounter="https://ampena.goatcounter.com/count" src="//gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://ampena.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
 <!-- Open Graph / Social Preview -->
 <meta content="AP MazeLab — Free Maze Generator" property="og:title"/>
 <meta content="Create unlimited customizable mazes for books, education and creative projects. Export SVG, PNG and PDF. 100% free." property="og:description"/>
@@ -151,11 +152,48 @@
 <input id="road" max="40" min="2" type="number" value="10"/>
 <div class="hint" data-i18n="roadHint">Para imprimir, 8–12 suele verse muy bien.</div>
 </div>
+
 <div class="field" style="grid-column:1 / -1">
-<label data-i18n="topPad">Margen superior (px)</label>
-<input id="topPad" max="420" min="0" type="number" value="90"/>
-<div class="hint" data-i18n="topPadHint">Dejá espacio para título/consigna.</div>
+  <label data-i18n="marginsLabel">Márgenes (px)</label>
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+    <div class="field">
+      <label data-i18n="marginsMode">Modo</label>
+      <select id="marginMode">
+        <option value="linked" data-i18n="marginsLinked">Iguales en los 4 lados</option>
+        <option value="perSide" data-i18n="marginsPerSide">Personalizar por lado</option>
+      </select>
+    </div>
+    <div class="field" id="marginAllWrap">
+      <label data-i18n="marginsAll">Margen</label>
+      <input id="marginAll" max="420" min="0" type="number" value="24"/>
+      <div class="hint" data-i18n="marginsAllHint">Borde parejo para imprimir o jugar.</div>
+    </div>
+  </div>
+
+  <div class="grid" id="marginSides" style="display:none; margin-top:10px;">
+    <div class="field">
+      <label data-i18n="marginTop">Arriba</label>
+      <input id="marginTop" max="420" min="0" type="number" value="24"/>
+    </div>
+    <div class="field">
+      <label data-i18n="marginRight">Derecha</label>
+      <input id="marginRight" max="420" min="0" type="number" value="24"/>
+    </div>
+    <div class="field">
+      <label data-i18n="marginBottom">Abajo</label>
+      <input id="marginBottom" max="420" min="0" type="number" value="24"/>
+    </div>
+    <div class="field">
+      <label data-i18n="marginLeft">Izquierda</label>
+      <input id="marginLeft" max="420" min="0" type="number" value="24"/>
+    </div>
+  </div>
+
+  <!-- Legacy (kept for share links / backward compat). Not used by the new layout. -->
+  <input id="topPad" type="number" value="90" style="display:none" />
+  <div class="hint" data-i18n="marginsHint">Tip: podés dejar espacio extra arriba si querés texto o un logo.</div>
 </div>
+
 <div class="field" style="grid-column:1 / -1">
 <label data-i18n="seed">Semilla (opcional)</label>
 <input id="seed" placeholder="ej: CAMIONES01" type="text"/>
@@ -292,6 +330,38 @@
 </div>
 </div>
 </div>
+
+<div class="playOptions" id="playOptions" style="display:none;">
+  <div class="playOptionsInner">
+    <div class="field" style="min-width: 200px;">
+      <label data-i18n="playDifficulty">Dificultad (Play)</label>
+      <select id="playDifficultySel">
+        <option value="easy" data-i18n="diffEasy">Fácil</option>
+        <option value="medium" data-i18n="diffMedium" selected>Media</option>
+        <option value="hard" data-i18n="diffHard">Difícil</option>
+        <option value="custom" data-i18n="diffCustom">Personalizada</option>
+      </select>
+      <div class="hint" data-i18n="playDifficultyHint">Cambia el tamaño del laberinto para jugar.</div>
+    </div>
+
+    <div class="playCustomPanel" id="playCustomPanel" style="display:none;">
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+        <div class="field">
+          <label data-i18n="cols">Columnas</label>
+          <input id="playCols" type="number" min="5" max="160" value="30"/>
+        </div>
+        <div class="field">
+          <label data-i18n="rows">Filas</label>
+          <input id="playRows" type="number" min="5" max="160" value="20"/>
+        </div>
+      </div>
+      <div class="actions" style="grid-template-columns: 1fr; margin-top:10px;">
+        <button class="btnGood" id="btnPlayApply" type="button" data-i18n="playApply">Aplicar y generar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="canvasWrap">
 <canvas aria-label="Maze preview" height="700" id="canvas" width="900"></canvas>
 
@@ -311,6 +381,22 @@
      ☕ Support this project
   </a>
 </div>
+</div>
+
+
+<!-- Mobile D-Pad (Play mode) -->
+<div id="dpad" class="dpad" style="display:none;">
+  <div class="dpad-grid">
+    <div></div>
+    <button class="dpad-btn" data-dir="up" aria-label="Up">▲</button>
+    <div></div>
+
+    <button class="dpad-btn" data-dir="left" aria-label="Left">◀</button>
+    <button class="dpad-btn" data-dir="down" aria-label="Down">▼</button>
+    <button class="dpad-btn" data-dir="right" aria-label="Right">▶</button>
+
+    <div></div><div></div><div></div>
+  </div>
 </div>
 
 <script src="./assets/app.js"></script></body>
