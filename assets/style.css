@@ -262,3 +262,63 @@
   border:1px solid rgba(255,255,255,.12);
   background: rgba(13,22,40,.55);
 }
+
+
+/* =========================
+   Play options + Mobile D-pad
+========================= */
+
+.playOptions{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+.playOptionsInner{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.playCustomPanel{
+  flex: 1 1 280px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,.18);
+  background: rgba(13,22,40,.30);
+}
+
+.dpad{
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 9998;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.dpad-grid{
+  display:grid;
+  grid-template-columns: 52px 52px 52px;
+  grid-template-rows: 52px 52px 52px;
+  gap: 8px;
+}
+.dpad-btn{
+  width:52px;
+  height:52px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35);
+  color: rgba(255,255,255,.92);
+  font-size: 20px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  touch-action:none;
+  padding:0;
+}
+.dpad-btn:active{ transform: translateY(1px); opacity: .9; }
+@media (max-width: 820px){
+  body.apml-playing .dpad{ display:block !important; }
+}

@@ -18,6 +18,10 @@
   function setMode(mode){
     localStorage.setItem('apml_mode', mode);
 
+    // body state for CSS (mobile controls, etc.)
+    document.body.classList.toggle('apml-playing', mode === 'play');
+    const playOptions = document.getElementById('playOptions');
+
     if (mode === 'home'){
       homeOverlay?.classList.remove('hidden');
       if (playHud) playHud.style.display = 'none';
@@ -30,6 +34,7 @@
     if (mode === 'play'){
       if (playHud) playHud.style.display = '';
       if (playScores) playScores.style.display = '';
+      if (playOptions) playOptions.style.display = '';
       // start play after current script has set up maze
       try{
         if (typeof window.apmlStartPlay === 'function') window.apmlStartPlay();
@@ -40,6 +45,7 @@
     // print
     if (playHud) playHud.style.display = 'none';
     if (playScores) playScores.style.display = 'none';
+    if (playOptions) playOptions.style.display = 'none';
   }
 
   btnModePrint?.addEventListener('click', ()=>setMode('print'));
@@ -137,7 +143,23 @@ const i18n = {
       "El contenido generado (laberintos) puede usarse libremente en proyectos personales/comerciales.\n\n" +
       "© 2026 Alejandro Pena",
     pdfHint:
-      "Se abrirá un SVG listo para imprimir.\nEn esa pestaña: Imprimir → Guardar como PDF.\nTip: desactivá encabezados/pies y ajustá escala a 100%."
+      "Se abrirá un SVG listo para imprimir.\nEn esa pestaña: Imprimir → Guardar como PDF.\nTip: desactivá encabezados/pies y ajustá escala a 100%.",
+  
+    marginsLabel: "Márgenes (px)",
+    marginsMode: "Modo",
+    marginsLinked: "Iguales en los 4 lados",
+    marginsPerSide: "Personalizar por lado",
+    marginsAll: "Margen",
+    marginsAllHint: "Borde parejo para imprimir o jugar.",
+    marginTop: "Arriba",
+    marginRight: "Derecha",
+    marginBottom: "Abajo",
+    marginLeft: "Izquierda",
+    marginsHint: "Tip: podés dejar espacio extra arriba si querés texto o un logo.",
+    playDifficulty: "Dificultad (Play)",
+    playDifficultyHint: "Cambia el tamaño del laberinto para jugar.",
+    playApply: "Aplicar y generar"
+
   },
   en: {
     pageTitle: "AP MazeLab — Free • Unlimited • Customizable",
@@ -216,7 +238,23 @@ const i18n = {
       "Generated content (mazes) can be used freely for personal/commercial projects.\n\n" +
       "© 2026 Alejandro Pena",
     pdfHint:
-      "An SVG ready for printing will open.\nIn that tab: Print → Save as PDF.\nTip: disable headers/footers and keep scale at 100%."
+      "An SVG ready for printing will open.\nIn that tab: Print → Save as PDF.\nTip: disable headers/footers and keep scale at 100%.",
+  
+    marginsLabel: "Margins (px)",
+    marginsMode: "Mode",
+    marginsLinked: "Same on all sides",
+    marginsPerSide: "Customize per side",
+    marginsAll: "Margin",
+    marginsAllHint: "Even border for print or play.",
+    marginTop: "Top",
+    marginRight: "Right",
+    marginBottom: "Bottom",
+    marginLeft: "Left",
+    marginsHint: "Tip: add extra top space for a title or logo.",
+    playDifficulty: "Difficulty (Play)",
+    playDifficultyHint: "Changes maze size for playing.",
+    playApply: "Apply & generate"
+
   },
   pt: {
     pageTitle: "AP MazeLab — Free • Unlimited • Customizable",
@@ -295,7 +333,23 @@ const i18n = {
       "O conteúdo gerado (labirintos) pode ser usado livremente em projetos pessoais/comerciais.\n\n" +
       "© 2026 Alejandro Pena",
     pdfHint:
-      "Um SVG pronto para impressão será aberto.\nNa nova aba: Imprimir → Salvar como PDF.\nDica: desative cabeçalhos/rodapés e mantenha escala 100%."
+      "Um SVG pronto para impressão será aberto.\nNa nova aba: Imprimir → Salvar como PDF.\nDica: desative cabeçalhos/rodapés e mantenha escala 100%.",
+  
+    marginsLabel: "Margens (px)",
+    marginsMode: "Modo",
+    marginsLinked: "Iguais nos 4 lados",
+    marginsPerSide: "Personalizar por lado",
+    marginsAll: "Margem",
+    marginsAllHint: "Borda igual para imprimir ou jogar.",
+    marginTop: "Topo",
+    marginRight: "Direita",
+    marginBottom: "Base",
+    marginLeft: "Esquerda",
+    marginsHint: "Dica: deixe espaço extra em cima para título ou logo.",
+    playDifficulty: "Dificuldade (Play)",
+    playDifficultyHint: "Muda o tamanho do labirinto para jogar.",
+    playApply: "Aplicar e gerar"
+
   },
   it: {
     pageTitle: "AP MazeLab — Free • Unlimited • Customizable",
@@ -374,7 +428,7 @@ const i18n = {
       "Il contenuto generato (labirinti) può essere usato liberamente per progetti personali/commerciali.\n\n" +
       "© 2026 Alejandro Pena",
     pdfHint:
-      "Si aprirà un SVG pronto per la stampa.\nNella nuova scheda: Stampa → Salva come PDF.\nSuggerimento: disattiva intestazioni/piè di pagina e mantieni scala 100%."
+      "Si aprirà un SVG pronto per la stampa.\nNella nuova scheda: Stampa → Salva come PDF.\nSuggerimento: disattiva intestazioni/piè di pagina e mantieni scala 100%.",
   }
 };
 
@@ -710,13 +764,17 @@ function solveMaze(grid, entry, exit){
 /* ===========================
    Draw maze (thick walls)
    =========================== */
-function drawMazeToCanvas(targetCanvas, grid, cell, road, topPad, showSolution){
+function drawMazeToCanvas(targetCanvas, grid, cell, road, pads, showSolution){
+  const padT = pads?.t ?? 0;
+  const padR = pads?.r ?? 0;
+  const padB = pads?.b ?? 0;
+  const padL = pads?.l ?? 0;
   const ctx = targetCanvas.getContext('2d');
   const rows = grid.length;
   const cols = grid[0].length;
 
-  const w = cols * cell;
-  const h = rows * cell + topPad;
+  const w = cols * cell + padL + padR;
+  const h = rows * cell + padT + padB;
 
   targetCanvas.width = Math.max(2, Math.floor(w + 2));
   targetCanvas.height = Math.max(2, Math.floor(h + 2));
@@ -725,18 +783,18 @@ function drawMazeToCanvas(targetCanvas, grid, cell, road, topPad, showSolution){
   ctx.fillStyle = "#fff";
   ctx.fillRect(0,0,targetCanvas.width,targetCanvas.height);
 
-  // reserved top area guideline
-  if (topPad > 0) {
+  // optional top guideline (only if top padding is significantly larger than others)
+  if (padT > Math.max(12, (padL+padR+padB)/3 + 12)) {
     ctx.strokeStyle = "#eee";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, topPad+0.5);
-    ctx.lineTo(targetCanvas.width, topPad+0.5);
+    ctx.moveTo(0, padT+0.5);
+    ctx.lineTo(targetCanvas.width, padT+0.5);
     ctx.stroke();
   }
 
-  const ox = 1;
-  const oy = topPad + 1;
+  const ox = 1 + padL;
+  const oy = 1 + padT;
 
   // walls
   ctx.strokeStyle = "#111";
@@ -784,13 +842,14 @@ function drawMazeToCanvas(targetCanvas, grid, cell, road, topPad, showSolution){
    Supports printMode: set physical size 10x8 using DPI
    =========================== */
 function mazeToSVG(grid, opts){
-  const {cell, road, topPad, showSolution, printMode, dpi, topIn} = opts;
+  const {cell, road, pads, showSolution, printMode, dpi, topIn} = opts;
+  const padT = pads?.t ?? 0, padR = pads?.r ?? 0, padB = pads?.b ?? 0, padL = pads?.l ?? 0;
   const rows = grid.length;
   const cols = grid[0].length;
 
   // export canvas size in px
-  let Wpx = cols*cell + 2;
-  let Hpx = rows*cell + topPad + 2;
+  let Wpx = cols*cell + padL + padR + 2;
+  let Hpx = rows*cell + padT + padB + 2;
 
   // Print mode: 10x8 inches landscape
   let widthAttr = `${Wpx}`;
@@ -801,19 +860,19 @@ function mazeToSVG(grid, opts){
     const wIn = 10, hIn = 8;
     Wpx = Math.round(wIn * dpi);
     Hpx = Math.round(hIn * dpi);
-    const topPadPx = Math.round(topIn * dpi);
+    const padAllPx = Math.round(topIn * dpi);
 
-    // compute cell to fit grid
-    const cellFit = Math.floor(Math.min((Wpx-2)/cols, (Hpx-topPadPx-2)/rows));
+    // compute cell to fit grid (padding on all sides)
+    const cellFit = Math.floor(Math.min((Wpx-2-padAllPx*2)/cols, (Hpx-2-padAllPx*2)/rows));
     const c = Math.max(2, cellFit);
     const r = Math.max(2, Math.round(road * (c / cell))); // scale road from preview cell
-    const tp = Math.max(0, topPadPx);
+    const padsFit = {t: padAllPx, r: padAllPx, b: padAllPx, l: padAllPx};
 
     // override for print export
     return mazeToSVG(grid, {
       cell: c,
       road: r,
-      topPad: tp,
+      pads: padsFit,
       showSolution,
       printMode: false, // already applied
       dpi, topIn
@@ -823,7 +882,7 @@ function mazeToSVG(grid, opts){
     );
   }
 
-  const ox=1, oy=topPad+1;
+  const ox=1+padL, oy=1+padT;
 
   const paths = [];
   const line = (x1,y1,x2,y2)=> paths.push(`<path d="M ${x1} ${y1} L ${x2} ${y2}" />`);
@@ -888,7 +947,7 @@ function mazeToSVG(grid, opts){
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthAttr}" height="${heightAttr}" viewBox="${viewBox}">
   <rect width="100%" height="100%" fill="#fff"/>
-  ${topPad>0 ? `<line x1="0" y1="${topPad+0.5}" x2="${Wpx}" y2="${topPad+0.5}" stroke="#eee" stroke-width="1"/>` : ""}
+  ${padT>0 ? `<line x1="0" y1="${padT+0.5}" x2="${Wpx}" y2="${padT+0.5}" stroke="#eee" stroke-width="1"/>` : ""}
   <g fill="none" stroke="#111" stroke-width="${road}" stroke-linecap="square">
     ${paths.join("\n    ")}
   </g>
@@ -919,6 +978,7 @@ function exportPNG(){
     return;
   }
 
+
   // print mode export: 10x8 inches
   const wIn = 10, hIn = 8;
   const Wpx = Math.round(wIn * dpi);
@@ -926,14 +986,14 @@ function exportPNG(){
   const topPadPx = Math.round(topIn * dpi);
 
   const cols = p.cols, rows = p.rows;
-  const cellFit = Math.floor(Math.min((Wpx-2)/cols, (Hpx-topPadPx-2)/rows));
+  const cellFit = Math.floor(Math.min((Wpx-2-topPadPx*2)/cols, (Hpx-2-topPadPx*2)/rows));
   const cell = Math.max(2, cellFit);
 
   // scale road relative to preview cell
   const road = Math.max(2, Math.round(p.road * (cell / p.cell)));
 
   const off = document.createElement("canvas");
-  drawMazeToCanvas(off, lastGrid, cell, road, topPadPx, showSol);
+  drawMazeToCanvas(off, lastGrid, cell, road, {t: topPadPx, r: topPadPx, b: topPadPx, l: topPadPx}, showSol);
 
   off.toBlob((blob)=>{
     downloadBlob(`ap-mazelab-10x8-${dpi}dpi.png`, blob);
@@ -954,7 +1014,7 @@ function exportPDF(){
 
   // We open SVG in new tab with correct physical sizing when printMode is on
   const svg = mazeToSVG(lastGrid, {
-    cell: p.cell, road: p.road, topPad: p.topPad,
+    cell: p.cell, road: p.road, pads: p.pads,
     showSolution: showSol,
     printMode,
     dpi,
@@ -973,12 +1033,49 @@ function exportPDF(){
 /* ===========================
    Read params + presets + difficulty
    =========================== */
+function readMarginsFromUI(){
+  const mode = (document.getElementById('marginMode')?.value || 'linked');
+  const clampPad = (n)=> clamp(toInt(n, 24), 0, 420);
+
+  let t=24,r=24,b=24,l=24;
+  if (mode === 'perSide'){
+    t = clampPad(document.getElementById('marginTop')?.value);
+    r = clampPad(document.getElementById('marginRight')?.value);
+    b = clampPad(document.getElementById('marginBottom')?.value);
+    l = clampPad(document.getElementById('marginLeft')?.value);
+  } else {
+    const all = clampPad(document.getElementById('marginAll')?.value);
+    t=r=b=l=all;
+  }
+
+  return {mode, t, r, b, l};
+}
+
+function syncMarginUI(){
+  const modeEl = document.getElementById('marginMode');
+  const mode = modeEl ? modeEl.value : 'linked';
+  const allWrap = document.getElementById('marginAllWrap');
+  const sides = document.getElementById('marginSides');
+
+  if (mode === 'perSide'){
+    if (allWrap) allWrap.style.display = 'none';
+    if (sides) sides.style.display = '';
+  } else {
+    if (allWrap) allWrap.style.display = '';
+    if (sides) sides.style.display = 'none';
+  }
+}
+
 function readParamsFromUI() {
   const cols = clamp(toInt(document.getElementById('cols').value, 30), 5, 160);
   const rows = clamp(toInt(document.getElementById('rows').value, 20), 5, 160);
   const cell = clamp(toInt(document.getElementById('cell').value, 24), 10, 80);
   const road = clamp(toInt(document.getElementById('road').value, 10), 2, 40);
-  const topPad = clamp(toInt(document.getElementById('topPad').value, 90), 0, 420);
+  const m = readMarginsFromUI();
+  const pads = {t:m.t, r:m.r, b:m.b, l:m.l};
+  // keep legacy topPad in sync for old share links (topPad ~= top margin)
+  const topPad = pads.t;
+  try{ document.getElementById('topPad').value = String(topPad); }catch(e){}
   const seed = (document.getElementById('seed').value || "").trim();
   const entrySide = document.getElementById("entrySide").value;
   const exitSide  = document.getElementById("exitSide").value;
@@ -990,9 +1087,9 @@ function readParamsFromUI() {
   document.getElementById('rows').value = rows;
   document.getElementById('cell').value = cell;
   document.getElementById('road').value = road;
-  document.getElementById('topPad').value = topPad;
+  try{ document.getElementById('marginAll').value = (m.mode==='linked'? pads.t : document.getElementById('marginAll').value); }catch(e){}
 
-  return { cols, rows, cell, road, topPad, seed, entrySide, exitSide, sameRow, showSolution };
+  return { cols, rows, cell, road, pads, topPad, seed, entrySide, exitSide, sameRow, showSolution };
 }
 
 function applyDifficultyPreset(mode){
@@ -1009,7 +1106,10 @@ function applyDifficultyPreset(mode){
     document.getElementById("rows").value = 25;
     document.getElementById("cell").value = 22;
     document.getElementById("road").value = 10;
-    document.getElementById("topPad").value = 90;
+    try{ document.getElementById('marginMode').value = 'linked'; }catch(e){}
+  try{ document.getElementById('marginAll').value = 24; }catch(e){}
+  try{ document.getElementById('marginTop').value = 24; document.getElementById('marginRight').value = 24; document.getElementById('marginBottom').value = 24; document.getElementById('marginLeft').value = 24; }catch(e){}
+  document.getElementById("topPad").value = 90;
     setToggle(document.getElementById("sameRowToggle"), false);
   } else if (mode === "hard"){
     document.getElementById("cols").value = 60;
@@ -1052,14 +1152,14 @@ function updateSizeInfo(){
   const topIn = clamp(toFloat(document.getElementById("topIn").value, 1.0), 0, 3);
 
   if (!printMode){
-    const W = p.cols*p.cell + 2;
-    const H = p.rows*p.cell + p.topPad + 2;
+    const W = p.cols*p.cell + (p.pads?.l||0) + (p.pads?.r||0) + 2;
+    const H = p.rows*p.cell + (p.pads?.t||0) + (p.pads?.b||0) + 2;
     sizeInfo.textContent = `Preview px: ${W}×${H}. Export: SVG/PNG/PDF.`;
   } else {
     const W = Math.round(10*dpi);
     const H = Math.round(8*dpi);
     const topPadPx = Math.round(topIn*dpi);
-    sizeInfo.textContent = `Print export: 10×8 in @ ${dpi} DPI → ${W}×${H} px. Top margin: ${topIn} in (${topPadPx}px).`;
+    sizeInfo.textContent = `Print export: 10×8 in @ ${dpi} DPI → ${W}×${H} px. Margin: ${topIn} in (${topPadPx}px) all sides.`;
   }
 }
 
@@ -1089,7 +1189,7 @@ function regenerate() {
   openBoundary(lastGrid, lastEntry);
   openBoundary(lastGrid, lastExit);
 
-  drawMazeToCanvas(canvas, lastGrid, p.cell, p.road, p.topPad, p.showSolution);
+  drawMazeToCanvas(canvas, lastGrid, p.cell, p.road, p.pads, p.showSolution);
 
   lastParams = p;
   updateSizeInfo();
@@ -1107,7 +1207,21 @@ function applyURLParamsToUI() {
   setIf('rows','rows');
   setIf('cell','cell');
   setIf('road','road');
-  setIf('topPad','topPad');
+  if (sp.has('topPad')){
+    const v = sp.get('topPad');
+    const mAll = document.getElementById('marginAll');
+    if (mAll) mAll.value = v;
+    const mt = document.getElementById('marginTop');
+    const mr = document.getElementById('marginRight');
+    const mb = document.getElementById('marginBottom');
+    const ml = document.getElementById('marginLeft');
+    if (mt) mt.value = v;
+    if (mr) mr.value = v;
+    if (mb) mb.value = v;
+    if (ml) ml.value = v;
+  }
+  setIf('topPad','topPad'); // legacy hidden
+
   setIf('seed','seed');
   setIf('entrySide','entry');
   setIf('exitSide','exit');
@@ -1158,7 +1272,7 @@ async function batchGenerate(){
 
     if (fmt === "svg"){
       const svg = mazeToSVG(grid, {
-        cell: p.cell, road: p.road, topPad: p.topPad,
+        cell: p.cell, road: p.road, pads: p.pads,
         showSolution: showSol,
         printMode,
         dpi,
@@ -1169,7 +1283,7 @@ async function batchGenerate(){
       // png: in print mode, render offscreen at DPI; else render at preview px
       if (!printMode){
         const off = document.createElement("canvas");
-        drawMazeToCanvas(off, grid, p.cell, p.road, p.topPad, showSol);
+        drawMazeToCanvas(off, grid, p.cell, p.road, p.pads, showSol);
         const blob = await new Promise(res=>off.toBlob(res,"image/png"));
         downloadBlob(`ap-mazelab-${String(i).padStart(3,"0")}.png`, blob);
       } else {
@@ -1181,7 +1295,7 @@ async function batchGenerate(){
         const road = Math.max(2, Math.round(p.road * (cell / p.cell)));
 
         const off = document.createElement("canvas");
-        drawMazeToCanvas(off, grid, cell, road, topPadPx, showSol);
+        drawMazeToCanvas(off, grid, cell, road, {t: topPadPx, r: topPadPx, b: topPadPx, l: topPadPx}, showSol);
         const blob = await new Promise(res=>off.toBlob(res,"image/png"));
         downloadBlob(`ap-mazelab-10x8-${dpi}dpi-${String(i).padStart(3,"0")}.png`, blob);
       }
@@ -1215,7 +1329,7 @@ document.getElementById('svg').addEventListener('click', () => {
   const topIn = clamp(toFloat(document.getElementById("topIn").value, 1.0), 0, 3);
 
   const svg = mazeToSVG(lastGrid, {
-    cell: p.cell, road: p.road, topPad: p.topPad,
+    cell: p.cell, road: p.road, pads: p.pads,
     showSolution: getToggle(document.getElementById("solutionToggle")),
     printMode,
     dpi,
@@ -1231,7 +1345,7 @@ document.getElementById('share').addEventListener('click', async () => {
   const p = lastParams || readParamsFromUI();
   const url = buildShareURL({
     lang: currentLang,
-    cols: p.cols, rows: p.rows, cell: p.cell, road: p.road, topPad: p.topPad,
+    cols: p.cols, rows: p.rows, cell: p.cell, road: p.road, pads: p.pads,
     seed: p.seed || "",
     entry: p.entrySide,
     exit: p.exitSide,
@@ -1259,6 +1373,9 @@ document.getElementById('reset').addEventListener('click', () => {
   document.getElementById("rows").value = 20;
   document.getElementById("cell").value = 24;
   document.getElementById("road").value = 10;
+  try{ document.getElementById('marginMode').value = 'linked'; }catch(e){}
+  try{ document.getElementById('marginAll').value = 24; }catch(e){}
+  try{ document.getElementById('marginTop').value = 24; document.getElementById('marginRight').value = 24; document.getElementById('marginBottom').value = 24; document.getElementById('marginLeft').value = 24; }catch(e){}
   document.getElementById("topPad").value = 90;
   document.getElementById("seed").value = "";
   document.getElementById("entrySide").value = "random";
@@ -1301,6 +1418,69 @@ document.getElementById("lang").addEventListener("change", (e) => {
   updateSizeInfo();
 });
 
+
+// Play difficulty quick selector
+(function(){
+  const sel = document.getElementById('playDifficultySel');
+  const panel = document.getElementById('playCustomPanel');
+  const btnApply = document.getElementById('btnPlayApply');
+  const inCols = document.getElementById('playCols');
+  const inRows = document.getElementById('playRows');
+
+  if (!sel) return;
+
+  function applyPlayPreset(v){
+    // Reasonable defaults for play (keeps on-screen readable)
+    if (v === 'easy'){
+      document.getElementById('cols').value = 18;
+      document.getElementById('rows').value = 12;
+      document.getElementById('cell').value = 28;
+      document.getElementById('road').value = 10;
+      document.getElementById('difficulty').value = 'easy';
+    } else if (v === 'medium'){
+      document.getElementById('cols').value = 28;
+      document.getElementById('rows').value = 18;
+      document.getElementById('cell').value = 24;
+      document.getElementById('road').value = 10;
+      document.getElementById('difficulty').value = 'medium';
+    } else if (v === 'hard'){
+      document.getElementById('cols').value = 40;
+      document.getElementById('rows').value = 26;
+      document.getElementById('cell').value = 20;
+      document.getElementById('road').value = 9;
+      document.getElementById('difficulty').value = 'hard';
+    }
+  }
+
+  function syncCustomInputs(){
+    inCols.value = document.getElementById('cols').value;
+    inRows.value = document.getElementById('rows').value;
+  }
+
+  sel.addEventListener('change', ()=>{
+    const v = sel.value;
+    if (v === 'custom'){
+      if (panel) panel.style.display = '';
+      syncCustomInputs();
+      return;
+    }
+    if (panel) panel.style.display = 'none';
+    applyPlayPreset(v);
+    regenerate();
+    // if currently in play mode, restart the run
+    try{ if (document.body.classList.contains('apml-playing')) window.apmlStartPlay?.(); }catch(e){}
+  });
+
+  btnApply?.addEventListener('click', ()=>{
+    document.getElementById('difficulty').value = 'custom';
+    document.getElementById('cols').value = inCols.value;
+    document.getElementById('rows').value = inRows.value;
+    regenerate();
+    try{ if (document.body.classList.contains('apml-playing')) window.apmlStartPlay?.(); }catch(e){}
+  });
+})();
+
+
 // Toggles
 function hookToggle(id, onChange){
   const el = document.getElementById(id);
@@ -1319,6 +1499,14 @@ hookToggle("sameRowToggle", ()=>{ regenerate(); });
    Init
    =========================== */
 applyURLParamsToUI();
+// Margin UI wiring
+try{
+  syncMarginUI();
+  document.getElementById('marginMode')?.addEventListener('change', ()=>{ syncMarginUI(); regenerate(); updateSizeInfo(); });
+  ['marginAll','marginTop','marginRight','marginBottom','marginLeft'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('change', ()=>{ regenerate(); updateSizeInfo(); });
+  });
+}catch(e){}
 applyLang(detectLang());
 regenerate();
 updateSizeInfo();
@@ -1420,9 +1608,10 @@ updateSizeInfo();
 
     const ctx = c.getContext('2d');
     const cell = lastParams.cell;
-    const topPad = lastParams.topPad;
-    const ox = 1;
-    const oy = topPad + 1;
+    const padT = lastParams.pads?.t ?? lastParams.topPad ?? 0;
+    const padL = lastParams.pads?.l ?? 0;
+    const ox = 1 + padL;
+    const oy = 1 + padT;
 
     // exit marker
     if (lastExit){
@@ -1453,7 +1642,7 @@ updateSizeInfo();
     // draw base maze without solution overlay (play shouldn't show solution)
     if (!lastGrid || !lastParams) return;
     try{
-      drawMazeToCanvas(c, lastGrid, lastParams.cell, lastParams.road, lastParams.topPad, false);
+      drawMazeToCanvas(c, lastGrid, lastParams.cell, lastParams.road, lastParams.pads, false);
       drawPlayerAndExit();
     }catch(e){}
   }
@@ -1532,7 +1721,7 @@ updateSizeInfo();
     // redraw original preview (respecting solution toggle)
     try{
       if (lastGrid && lastParams) {
-        drawMazeToCanvas(c, lastGrid, lastParams.cell, lastParams.road, lastParams.topPad, lastParams.showSolution);
+        drawMazeToCanvas(c, lastGrid, lastParams.cell, lastParams.road, lastParams.pads, lastParams.showSolution);
       }
     }catch(e){}
   }
@@ -1549,27 +1738,27 @@ updateSizeInfo();
     else if (e.key === 'ArrowDown') { e.preventDefault(); move(2); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); move(3); }
   }, {passive:false});
+  // Mobile controls: use on-screen D-Pad (see below)
 
-  // Simple touch/swipe controls
-  let touchStart = null;
-  c.addEventListener('touchstart', (e)=>{
-    if (!playing) return;
-    const t = e.touches[0];
-    touchStart = {x: t.clientX, y: t.clientY};
-  }, {passive:true});
 
-  c.addEventListener('touchend', (e)=>{
-    if (!playing || !touchStart) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStart.x;
-    const dy = t.clientY - touchStart.y;
-    touchStart = null;
-
-    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
-    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : 3);
-    else move(dy > 0 ? 2 : 0);
-  }, {passive:true});
-
+  // D-pad controls (mobile)
+  const dpad = document.getElementById('dpad');
+  if (dpad){
+    const btns = Array.from(dpad.querySelectorAll('.dpad-btn'));
+    const dirMap = {up:0, right:1, down:2, left:3};
+    const handle = (ev)=>{
+      if (!playing) return;
+      ev.preventDefault();
+      const dir = ev.currentTarget?.getAttribute('data-dir');
+      if (!dir) return;
+      move(dirMap[dir]);
+    };
+    btns.forEach(b=>{
+      b.addEventListener('pointerdown', handle, {passive:false});
+      b.addEventListener('touchstart', handle, {passive:false});
+      b.addEventListener('click', (e)=>{ e.preventDefault(); }, {passive:false});
+    });
+  }
   // Expose a start function for mode switcher
   window.apmlStartPlay = function(){
     // ensure maze exists
